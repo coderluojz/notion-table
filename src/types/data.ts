@@ -48,7 +48,7 @@ export interface Column {
 /**
  * 数据表的定义
  */
-export interface Table {
+export interface TableData {
   id: string;
   name: string;
   columns: Column[];
@@ -56,16 +56,6 @@ export interface Table {
   columnOrder: string[];
   rowOrder: string[];
 }
-
-/**
- * 数据库/工作空间的定义
- */
-export interface BaseTable {
-  id: string;
-  name: string;
-  tables: Table[];
-}
-
 
 export function generateId(): string {
   return uuidv4();

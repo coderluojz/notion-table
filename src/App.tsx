@@ -1,24 +1,31 @@
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { AppSidebar } from './components/app-sidebar'
 import { Button } from './components/ui/button'
 import { Input } from './components/ui/input'
-import { createTable } from './services/db'
+import { useAppStore } from './store/appStore'
 import { generateId } from './types/data'
 export default function App() {
+  const loadTableList = useAppStore((state) => state.loadTableList)
+  const addNewTable = useAppStore((state) => state.addNewTable)
+
   const [value, setValue] = useState('')
   async function handleCreateTable() {
     try {
-      await createTable({
-        id: generateId(),
-        name: value,
-        tables: [],
-      })
+      await addNewTable(value.trim() || `新表格-${generateId()}`)
       setValue('')
+      toast.success(`创建成功`)
     } catch (error) {
       console.log('error: ', error)
+      toast.success(`创建失败`)
     }
   }
+
+  useEffect(() => {
+    loadTableList()
+  }, [loadTableList])
+
   return (
     <SidebarProvider>
       <AppSidebar />
