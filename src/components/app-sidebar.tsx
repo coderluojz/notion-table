@@ -35,29 +35,35 @@ export function AppSidebar() {
           <SidebarGroupLabel>Notion Tables</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {tableList.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton asChild>
-                    <a
-                      href={item.id}
-                      className={cn(
-                        'p-2 rounded-md cursor-pointer text-sm break-all flex gap-2',
-                        activeTableId === item.id && 'font-bold bg-gray-300'
-                      )}
-                      onClick={(e) => {
-                        e.preventDefault()
-                        setActiveTableId(item.id)
-                      }}
-                    >
-                      <Home />
-                      <span className="flex-1 truncate">{item.name}</span>
-                      <Delete
-                        onClick={() => handleDelete(item.id, item.name)}
-                      />
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {tableList.length <= 0 ? (
+                <div className="text-center text-base">请创建表格</div>
+              ) : (
+                <>
+                  {tableList.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton asChild>
+                        <a
+                          href={item.id}
+                          className={cn(
+                            'p-2 rounded-md cursor-pointer text-sm break-all flex gap-2',
+                            activeTableId === item.id && 'font-bold bg-gray-100'
+                          )}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setActiveTableId(item.id)
+                          }}
+                        >
+                          <Home />
+                          <span className="flex-1 truncate">{item.name}</span>
+                          <Delete
+                            onClick={() => handleDelete(item.id, item.name)}
+                          />
+                        </a>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

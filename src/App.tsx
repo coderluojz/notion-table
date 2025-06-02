@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { AppSidebar } from './components/app-sidebar'
+import MainContent from './components/main-content'
 import { Button } from './components/ui/button'
 import { Input } from './components/ui/input'
 import { useAppStore } from './store/appStore'
@@ -29,7 +30,7 @@ export default function App() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="flex-1 flex flex-col gap-4">
+      <main className="flex-1 flex flex-col">
         <div className="flex items-center justify-between p-4 gap-4">
           <SidebarTrigger />
           <div className="flex-1 flex items-center gap-4">
@@ -46,6 +47,7 @@ export default function App() {
             </Button>
           </div>
         </div>
+        <MainContent />
       </main>
     </SidebarProvider>
   )
