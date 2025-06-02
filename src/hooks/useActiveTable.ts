@@ -1,7 +1,7 @@
+import { useAppStore } from '@/store/appStore';
 import { useMemo } from 'react';
-import { useAppStore } from './store/appStore';
 
-export function useActiveTable() {
+export default function useActiveTable() {
   const activeTableId = useAppStore(state => state.activeTableId)
   const tableList = useAppStore(state => state.tableList)
 

@@ -13,6 +13,7 @@ interface AppState {
   deleteTableById: (tableId: string) => Promise<boolean>;
   addRowToActiveTable: () => Promise<void>
   addColumnToActiveTable: (columnName: string, columnType: ColumnType) => Promise<Column | null>;
+  editCellToActiveTable: (rowId: string, columnId: string, newValue: any) => Promise<boolean>;
 }
 export const useAppStore = create<AppState>((set, get) => ({
   /** 所有表格列表 */
@@ -165,8 +166,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       name: columnName,
       type: columnType,
       order: activeTable.columns.length,
-      // 初始化下拉选择的数据
-      options: columnType === 'SingleSelect' || columnType === 'MultiSelect' ? [] : undefined,
+      // 这里默认直接给个下拉选择的数据
+      options: columnType === 'SingleSelect' ? [{ id: '', name: '请选择' }, { id: 'HTML', name: 'HTML' }, { id: 'CSS', name: 'CSS' }, { id: 'JavaScript', name: 'JavaScript' },] : undefined,
     };
 
     // 为新列添加默认单元格数据
@@ -196,6 +197,55 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (error) {
       console.error("创建列事变: ", error);
       return null;
+    }
+  },
+  /** 编辑单元格 */
+  editCellToActiveTable: async (rowId: string, columnId: string, newValue: any): Promise<boolean> => {
+    const activeTableId = get().activeTableId;
+    const currentTableList = get().tableList;
+    const activeTable = currentTableList.find(t => t.id === activeTableId);
+
+    if (!activeTable) {
+      console.log("没有激活的表格");
+      return false;
+    }
+
+    const currentRow = activeTable.rows[rowId];
+    if (!currentRow) {
+      console.log(`行${rowId}不存在`);
+      return false;
+    }
+
+    const currentColumn = activeTable.columns.find(col => col.id === columnId);
+    if (!currentColumn) {
+      console.log(`列${columnId}不存在`);
+      return false;
+    }
+
+    const updatedRowData: RowData = {
+      ...currentRow,
+      [columnId]: { value: newValue },
+    };
+
+    const updatedTable: TableData = {
+      ...activeTable,
+      rows: {
+        ...activeTable.rows,
+        [rowId]: updatedRowData,
+      },
+    };
+
+    try {
+      await updateTable(updatedTable);
+      set({
+        tableList: currentTableList.map(t =>
+          t.id === activeTableId ? updatedTable : t
+        ),
+      });
+      return true;
+    } catch (error) {
+      console.error('编辑单元格失败: ', error);
+      return false;
     }
   },
 }))

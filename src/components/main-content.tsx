@@ -1,5 +1,6 @@
-import { useActiveTable } from '@/hooks'
+import useActiveTable from '@/hooks/useActiveTable'
 import { useAppStore } from '@/store/appStore'
+import type { Column } from '@/types/data'
 import {
   createColumnHelper,
   flexRender,
@@ -7,15 +8,21 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { useMemo } from 'react'
+import EditCell from './edit-cell'
 import { SelectDialog } from './select-dialog'
 import { Button } from './ui/button'
 
+type RowDataType = Record<string, any> & { __rowId: string }
+
 // 创建列辅助工具
-const columnHelper = createColumnHelper<Record<string, any>>()
+const columnHelper = createColumnHelper<RowDataType>()
 
 export default function MainContent() {
   const activeTable = useActiveTable()
   const addRowToActiveTable = useAppStore((state) => state.addRowToActiveTable)
+  const editCellToActiveTable = useAppStore(
+    (state) => state.editCellToActiveTable
+  )
 
   const tableData = useMemo(() => {
     if (!activeTable || !activeTable.rows || !activeTable.rowOrder) return []
@@ -27,7 +34,7 @@ export default function MainContent() {
           console.log(`行${rowId}不存在`)
           return null
         }
-        const rowCellData: Record<string, any> = { __rowId: rowId }
+        const rowCellData: RowDataType = { __rowId: rowId }
         // 填充这行中每列的数据
         activeTable.columns.forEach((column) => {
           rowCellData[column.id] = rowValue[column.id]
@@ -36,7 +43,7 @@ export default function MainContent() {
         })
         return rowCellData
       })
-      .filter((row) => row !== null) as Record<string, any>[]
+      .filter((row) => row !== null) as RowDataType[]
 
     return resultTableData
   }, [activeTable])
@@ -45,12 +52,23 @@ export default function MainContent() {
     if (!activeTable) return []
     const orderedColumns = activeTable.columnOrder
       .map((colId) => activeTable.columns.find((c) => c.id === colId))
-      .filter(Boolean)
+      .filter(Boolean) as Column[]
 
     return orderedColumns.map((colDef) => {
-      return columnHelper.accessor(colDef!.id, {
-        header: () => <span>{colDef!.name}</span>,
-        cell: (info) => info.getValue(),
+      const mappedOptions = colDef.options?.map((opt) => ({
+        value: opt.id,
+        label: opt.name,
+      }))
+
+      return columnHelper.accessor(colDef.id, {
+        header: () => <span>{colDef.name}</span>,
+        cell: (info) => {
+          return <EditCell {...info} />
+        },
+        meta: {
+          type: colDef.type,
+          options: mappedOptions,
+        },
       })
     })
   }, [activeTable])
@@ -62,6 +80,17 @@ export default function MainContent() {
     getCoreRowModel: getCoreRowModel(),
     // 开启行选择
     enableRowSelection: true,
+    meta: {
+      updateData: (rowIndex: number, columnId: string, value: any) => {
+        const rowOriginal = tableInstance.getRowModel().rowsById[rowIndex]
+          ?.original as RowDataType
+
+        const rowId = rowOriginal?.__rowId
+        if (rowId) {
+          editCellToActiveTable(rowId, columnId, value)
+        }
+      },
+    },
   })
 
   if (!activeTable)

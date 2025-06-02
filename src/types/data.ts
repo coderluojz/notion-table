@@ -11,7 +11,6 @@ export type ColumnType =
   | 'Date'       // 日期
   | 'Checkbox'    // 多选框
   | 'SingleSelect' // 单选选项
-  | 'MultiSelect';  // 多选选项
 
 /**
  * 针对选择类型的选项定义
@@ -43,8 +42,7 @@ export interface Column {
   name: string;
   type: ColumnType;
   order: number;
-  options?: SelectOption[]; // 当 type 为 'SingleSelect' 或 'MultiSelect' 时使用
-  dateFormat?: string; // Date 类型格式化
+  options?: SelectOption[];
 }
 
 /**
@@ -80,8 +78,6 @@ export function getDefaultCellValueByType(type: ColumnType): any {
       return false;
     case 'SingleSelect':
       return null;
-    case 'MultiSelect':
-      return [];
     default:
       return null;
   }

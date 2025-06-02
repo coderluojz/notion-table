@@ -28,7 +28,7 @@ const SelectColumnTypes: { value: ColumnType; label: string }[] = [
   { value: 'Date', label: '日期' },
   { value: 'Checkbox', label: '复选框' },
   { value: 'SingleSelect', label: '下拉单选' },
-  { value: 'MultiSelect', label: '下拉多选' },
+  // { value: 'MultiSelect', label: '下拉多选' },
 ]
 
 export function SelectDialog() {
