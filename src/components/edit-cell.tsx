@@ -22,7 +22,7 @@ interface EditCellProps {
   table: {
     options: {
       meta?: {
-        updateData?: (rowIndex: number, columnId: string, value: any) => void
+        updateData?: (rowId: string, columnId: string, value: any) => void
       }
     }
   }
@@ -84,7 +84,11 @@ export default function EditCell({
       } else if (cellMetaType === 'Checkbox') {
         processedValue = Boolean(processedValue)
       }
-      table.options.meta.updateData(row.index, column.id, processedValue)
+      table.options.meta.updateData(
+        row.original.__rowId,
+        column.id,
+        processedValue
+      )
     }
     setIsEditing(false)
   }

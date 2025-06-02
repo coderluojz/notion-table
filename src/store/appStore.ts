@@ -16,6 +16,7 @@ interface AppState {
   editCellToActiveTable: (rowId: string, columnId: string, newValue: any) => Promise<boolean>;
   deleteRowToActiveTable: (rowId: string) => Promise<boolean>;
   deleteColumnToActiveTable: (columnId: string) => Promise<boolean>;
+  tableOrder: (orderIds: string[], type: 'row' | 'column') => Promise<boolean>;
 }
 export const useAppStore = create<AppState>((set, get) => ({
   /** 所有表格列表 */
@@ -340,6 +341,41 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (error) {
       console.log('error: ', error);
       toast.error('删除列失败');
+      return false;
+    }
+  },
+  /** 表格排序 */
+  tableOrder: async (orderIds: string[], type): Promise<boolean> => {
+    const activeTableId = get().activeTableId;
+    const currentTableList = get().tableList;
+    const activeTable = currentTableList.find(t => t.id === activeTableId);
+
+    if (!activeTable) {
+      console.log("没有激活的表格");
+      return false;
+    }
+
+    const updatedTable: TableData = {
+      ...activeTable,
+    };
+
+    if (type === 'row') {
+      updatedTable.rowOrder = orderIds;
+    } else if (type === 'column') {
+      updatedTable.columnOrder = orderIds;
+    }
+
+
+    try {
+      await updateTable(updatedTable);
+      set({
+        tableList: currentTableList.map(t =>
+          t.id === activeTableId ? updatedTable : t
+        ),
+      });
+      return true;
+    } catch (error) {
+      console.log('error: ', error);
       return false;
     }
   },
