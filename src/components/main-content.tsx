@@ -1,21 +1,16 @@
 import useActiveTable from '@/hooks/useActiveTable'
+import useTableColumn from '@/hooks/useTableColumn'
 import { useAppStore } from '@/store/appStore'
-import type { Column } from '@/types/data'
 import {
-  createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table'
 import { useMemo } from 'react'
-import EditCell from './edit-cell'
 import { SelectDialog } from './select-dialog'
 import { Button } from './ui/button'
 
-type RowDataType = Record<string, any> & { __rowId: string }
-
-// 创建列辅助工具
-const columnHelper = createColumnHelper<RowDataType>()
+export type RowDataType = Record<string, any> & { __rowId: string }
 
 export default function MainContent() {
   const activeTable = useActiveTable()
@@ -48,30 +43,7 @@ export default function MainContent() {
     return resultTableData
   }, [activeTable])
 
-  const tableColumns = useMemo(() => {
-    if (!activeTable) return []
-    const orderedColumns = activeTable.columnOrder
-      .map((colId) => activeTable.columns.find((c) => c.id === colId))
-      .filter(Boolean) as Column[]
-
-    return orderedColumns.map((colDef) => {
-      const mappedOptions = colDef.options?.map((opt) => ({
-        value: opt.id,
-        label: opt.name,
-      }))
-
-      return columnHelper.accessor(colDef.id, {
-        header: () => <span>{colDef.name}</span>,
-        cell: (info) => {
-          return <EditCell {...info} />
-        },
-        meta: {
-          type: colDef.type,
-          options: mappedOptions,
-        },
-      })
-    })
-  }, [activeTable])
+  const tableColumns = useTableColumn()
 
   const tableInstance = useReactTable({
     data: tableData,
@@ -124,6 +96,11 @@ export default function MainContent() {
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
+                      style={{
+                        width: header.getSize(),
+                        minWidth: header.column.columnDef.minSize,
+                        maxWidth: header.column.columnDef.maxSize,
+                      }}
                       scope="col"
                       className="px-4 py-2 text-left text-xs font-medium text-gray-500"
                     >
@@ -143,6 +120,9 @@ export default function MainContent() {
                 <tr key={row.id} className="hover:bg-gray-50">
                   {row.getVisibleCells().map((cell) => (
                     <td
+                      style={{
+                        width: cell.column.getSize(),
+                      }}
                       key={cell.id}
                       className="px-4 py-2 whitespace-nowrap text-sm text-gray-700"
                     >

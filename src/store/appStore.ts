@@ -14,6 +14,8 @@ interface AppState {
   addRowToActiveTable: () => Promise<void>
   addColumnToActiveTable: (columnName: string, columnType: ColumnType) => Promise<Column | null>;
   editCellToActiveTable: (rowId: string, columnId: string, newValue: any) => Promise<boolean>;
+  deleteRowToActiveTable: (rowId: string) => Promise<boolean>;
+  deleteColumnToActiveTable: (columnId: string) => Promise<boolean>;
 }
 export const useAppStore = create<AppState>((set, get) => ({
   /** 所有表格列表 */
@@ -245,6 +247,99 @@ export const useAppStore = create<AppState>((set, get) => ({
       return true;
     } catch (error) {
       console.error('编辑单元格失败: ', error);
+      return false;
+    }
+  },
+  /** 删除行 */
+  deleteRowToActiveTable: async (rowId: string): Promise<boolean> => {
+    const activeTableId = get().activeTableId;
+    const currentTableList = get().tableList;
+    const activeTable = currentTableList.find(t => t.id === activeTableId);
+
+    if (!activeTable) {
+      console.log("没有激活的表格");
+      return false;
+    }
+
+    if (!activeTable.rows[rowId]) {
+      console.log(`行${rowId}不存在`);
+      return false;
+    }
+
+    const updatedRows = { ...activeTable.rows };
+    delete updatedRows[rowId];
+
+    const updatedRowOrder = activeTable.rowOrder.filter(id => id !== rowId);
+    const updatedTable: TableData = {
+      ...activeTable,
+      rows: updatedRows,
+      rowOrder: updatedRowOrder,
+    };
+
+    try {
+      await updateTable(updatedTable);
+      set({
+        tableList: currentTableList.map(t =>
+          t.id === activeTableId ? updatedTable : t
+        ),
+      });
+      toast.success('删除行成功')
+      return true;
+    } catch (error) {
+      console.log('error: ', error);
+      toast.error('删除行失败')
+      return false;
+    }
+  },
+  /** 删除列 */
+  deleteColumnToActiveTable: async (columnId: string): Promise<boolean> => {
+    const activeTableId = get().activeTableId;
+    const currentTableList = get().tableList;
+    const activeTable = currentTableList.find(t => t.id === activeTableId);
+
+    if (!activeTable) {
+      console.log("没有激活的表格");
+      return false;
+    }
+
+    const columnExists = activeTable.columns.find(col => col.id === columnId);
+    if (!columnExists) {
+      console.log(`列${columnId}不存在`);
+      return false;
+    }
+
+    const updatedColumns = activeTable.columns.filter(col => col.id !== columnId);
+    const updatedColumnOrder = activeTable.columnOrder.filter(id => id !== columnId);
+
+    const updatedRows: Record<string, RowData> = {};
+
+    for (const rowId in activeTable.rows) {
+      const currentRowData = activeTable.rows[rowId];
+      const newRowData: RowData = { ...currentRowData };
+      // 删除对应列的数据
+      delete newRowData[columnId];
+      updatedRows[rowId] = newRowData;
+    }
+
+    const updatedTable: TableData = {
+      ...activeTable,
+      columns: updatedColumns,
+      columnOrder: updatedColumnOrder,
+      rows: updatedRows,
+    };
+
+    try {
+      await updateTable(updatedTable);
+      set({
+        tableList: currentTableList.map(t =>
+          t.id === activeTableId ? updatedTable : t
+        ),
+      });
+      toast.success('删除列成功');
+      return true;
+    } catch (error) {
+      console.log('error: ', error);
+      toast.error('删除列失败');
       return false;
     }
   },
