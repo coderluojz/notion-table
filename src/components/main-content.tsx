@@ -25,9 +25,10 @@ import {
   useReactTable,
   type Row,
 } from '@tanstack/react-table'
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { SelectDialog } from './select-dialog'
 import { Button } from './ui/button'
+import { Input } from './ui/input'
 
 export type RowDataType = Record<string, any> & { __rowId: string }
 
@@ -93,7 +94,14 @@ export default function MainContent() {
   const editCellToActiveTable = useAppStore(
     (state) => state.editCellToActiveTable
   )
+  const updateTableName = useAppStore((state) => state.updateTableName)
   const handleTableOrder = useAppStore((state) => state.tableOrder)
+
+  const [tableName, setTableName] = useState('')
+
+  useEffect(() => {
+    setTableName(activeTable?.name || '')
+  }, [activeTable?.name])
 
   const columnOrderIds = useMemo(
     () => activeTable?.columnOrder || [],
@@ -189,6 +197,15 @@ export default function MainContent() {
     }
   }
 
+  async function handleTableNameBlur() {
+    try {
+      await updateTableName(activeTable?.id as string, tableName)
+    } catch (error) {
+      console.log('error: ', error)
+      setTableName(activeTable?.name as string)
+    }
+  }
+
   if (!activeTable)
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -205,9 +222,15 @@ export default function MainContent() {
             + 添加行
           </Button>
         </div>
-        <h1 className="flex-1 text-3xl font-bold text-gray-800 pr-[187px] text-center">
-          {activeTable?.name}
-        </h1>
+        <div className="flex-1 text-gray-800 pr-[187px] text-center">
+          <Input
+            type="text"
+            value={tableName}
+            onBlur={handleTableNameBlur}
+            onChange={(e) => setTableName(e.target.value)}
+            className="mx-2 text-center text-3xl! font-bold border-none outline-none shadow-none focus-visible:ring-0"
+          />
+        </div>
       </div>
       <DndContext
         sensors={sensors}
@@ -253,8 +276,8 @@ export default function MainContent() {
                 ))}
               </thead>
               <SortableContext
-                items={rowOrderIds} // <--- 使用行ID顺序
-                strategy={verticalListSortingStrategy} // 垂直排序策略
+                items={rowOrderIds}
+                strategy={verticalListSortingStrategy}
               >
                 <tbody className="bg-white divide-y divide-gray-200">
                   {tableInstance.getRowModel().rows.map((row) => (
